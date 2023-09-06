@@ -1,4 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+// import fetch
+import fetch from 'node-fetch';
 
 // Remember to rename these classes and interfaces!
 
@@ -42,7 +44,7 @@ export default class MyPlugin extends Plugin {
 			name: 'Sample editor command',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
+				// editor.replaceSelection('Sample Editor Command');
 			}
 		});
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
