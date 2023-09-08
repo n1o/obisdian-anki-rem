@@ -7,7 +7,7 @@
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"jest": "jest --config=jest.config.ts"
+		"jest": "jest --config=jest.config.ts --verbose"
 	},
 	"jest": {
 		"verbose": true
@@ -20,6 +20,7 @@
 		"@babel/preset-env": "^7.22.15",
 		"@jest/globals": "^29.6.4",
 		"@types/node": "^16.11.6",
+		"@types/showdown": "^2.0.1",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"babel-jest": "^29.6.4",
@@ -33,6 +34,8 @@
 		"typescript": "4.7.4"
 	},
 	"dependencies": {
-		"node-fetch": "^3.3.2"
+		"axios": "^1.5.0",
+		"node-fetch": "^3.3.2",
+		"showdown": "^2.1.0"
 	}
 }

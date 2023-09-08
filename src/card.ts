@@ -1,26 +1,113 @@
 // import {  } from 'obsidian';
 
-import { MarkdownEditView } from "obsidian";
+import { TFile } from 'obsidian';
+import { Converter } from 'showdown';
+import { readFileSync } from 'fs';
 
-const MATH_INLINE = /\$(.*?)\$/g;
-const MATH_MULTILINE = /\$\$(.*?)\$\$/g;
+
+const MATH = /(\${1,2})(.+)(\${1,2})/g;
 const MAKRDOWN_HEADING = /^#+\s(.*)$/gm;
-const OBSIDIAN_IMAGE = /!\[(.*?)\]\((.*?)\)/g;
+const OBSIDIAN_IMAGE = /\!\[\[(.+)\]\]/g;
 
 class Card {
-    front: string;
-    back: string;
-    tags: string[];
-    images: string[];
 
-    constructor(front: string, back: string, tags: string[], images: string[]) {};
+    constructor(
+        public readonly front: string, 
+        public readonly back: string, 
+        public readonly tags: string[], 
+        public readonly deck: string, 
+        public readonly cardId: string| undefined
+        ) {
+    }
+
+    toString(): string {
+        return JSON.stringify(this);
+    }
 }
 
-function makeCard(selection: string, page: string): Card {
-    const front  = getFront(page, selection);
-    // let card = new Card();
-    // return card;
-    throw new Error("Not implemented");
+function createCard(
+    selection: string, 
+    wholeNote: string, 
+    tags: string[], 
+    deck: string,
+    imagePath: (image: string) => string
+    ): Card {
+    const headings = getAllHeadings(wholeNote);
+    var { front, back } = splitFrontAndHeading(wholeNote, selection);
+    
+    const firstLineEnd = selection.indexOf('\n')
+
+    back = replaceMath(back);
+    // read file encode base64
+    back = inlineImages(back, (image) => {
+        return readFileSync(imagePath(image), { encoding: 'base64' })
+    });
+
+    back = backAsHtml(back);
+
+    return new Card(front, back, tags, deck, undefined);
+}
+
+function getHeading(selection: string): string {
+    return selection.match(MAKRDOWN_HEADING)![0];
+}
+
+function splitFrontAndHeading(wholeNote: string, selection: string): { front: string, back: string } {
+    const firstHeading = getHeading(selection);
+    const allHeadings = getAllHeadings(wholeNote);
+
+    const front = determineFrontFromHeadings(allHeadings, firstHeading);
+
+    const back = selection.slice(firstHeading.length).trimStart().trimEnd();
+
+    return { front, back };
+
+}
+
+function extractaAllImages(selection: string): string[] {
+    return Array.from(selection.matchAll(OBSIDIAN_IMAGE)).map(x => x[1])
+}
+
+function replaceMath(selection: string): string {
+    var copy = selection;
+
+    const inlineMathMatch = copy.matchAll(MATH);
+    for (const match of inlineMathMatch) {
+
+        const wholeMatch = match[0];
+        const math = match[2];
+
+        if (wholeMatch.startsWith("$$")){
+            const _math = `[$$$]${math.slice(0, math.length-1)}[/$$$]`
+            copy = copy.replace(wholeMatch, _math);
+        } else {
+            copy = copy.replace(wholeMatch, `[$]${math}[/$]`)
+        }
+    }
+    return copy;
+}
+
+function inlineImages(selection: string, loadImage: (path: string) => string): string {
+    const matches = selection.matchAll(OBSIDIAN_IMAGE);
+    var copy = selection;
+
+    for (const match of matches) {
+        const wholePath = match[0];
+        const imagePath = match[1];
+
+        const end = imagePath.lastIndexOf(".") + 1
+        const imageType = imagePath.slice(end)
+
+        const imgBase64 = loadImage(imagePath);
+
+        copy = copy.replace(wholePath, `<img src="data:image/${imageType};base64, ${imgBase64}"/>`)
+    }
+    return copy 
+}
+
+function backAsHtml(back: string): string {
+    const converter = new Converter()
+    return converter.makeHtml(back);
 }
 
 function getFront(page: string, selection: string): string {
@@ -66,4 +153,10 @@ function determineFrontFromHeadings(headings: string[], heading: string): string
 export { 
     determineFrontFromHeadings,
     getAllHeadings,
+    inlineImages,
+    backAsHtml,
+    replaceMath,
+    createCard,
+    getHeading,
+    Card
 };

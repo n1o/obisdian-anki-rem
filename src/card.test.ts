@@ -1,6 +1,6 @@
 import {describe, expect, test} from '@jest/globals';
-import { determineFrontFromHeadings, getAllHeadings } from './card';
-import { assert } from 'console';
+import { backAsHtml, determineFrontFromHeadings, inlineImages, getAllHeadings, replaceMath } from './card';
+
 
 describe('Card', () => {
   test('determineFrontFromHeadings', () => {
@@ -26,4 +26,93 @@ describe('Card', () => {
     var result = getAllHeadings(text);
     expect(result).toEqual(["# Heading 1", "## Heading 2.0", "## Heading 2.1" ,"### Heading 3", "# Heading 1.1", "### Heading 3.1" ])
   });
+
+  test('backAsHtml', () => {
+      const text = `# Heading
+some text
+![[./image/path.png]]
+
+$$ x^2 $$
+      
+inline math $x^2$
+      `
+      const result = backAsHtml(text)
+      expect(result).toBe(`<h1 id=\"heading\">Heading</h1>
+<p>some text
+![[./image/path.png]]</p>
+<p>$$ x^2 $$</p>
+<p>inline math $x^2$</p>`)
+  });
+
+  test("Extract images", () => {
+
+
+      const imageToBase64 = (path: string): string => {
+        if (path === "./image/path.png") {
+          return "image_1_base_64"
+        }
+        if (path === "./image/path_2.jpg") {
+          return "image_2_base_64"
+        }
+        return "error"
+      }
+
+      const text = `# Heading
+some text
+![[./image/path.png]]
+another text
+![[./image/path_2.jpg]]
+      `
+
+      const result = inlineImages(text, imageToBase64);
+
+      expect(result).toBe(`# Heading
+some text
+<img src="data:image/png;base64, image_1_base_64"/>
+another text
+<img src="data:image/jpg;base64, image_2_base_64"/>
+      `)
+  });
+
+  test('replaceChain', () => {
+      const text = `# Heading
+some text
+![[./image/path.png]]
+
+$$ x^2 $$
+      
+inline math $x^2$
+      `
+      const imageToBase64 = (path: string): string => {
+        if (path === "./image/path.png") {
+          return "image_1_base_64"
+        }
+        if (path === "./image/path_2.jpg") {
+          return "image_2_base_64"
+        }
+        return "error"
+      }
+
+      var result = inlineImages(text, imageToBase64)
+      result = backAsHtml(result);
+      expect(result).toBe(`<h1 id=\"heading\">Heading</h1>
+<p>some text
+<img src="data:image/png;base64, image_1_base_64"/></p>
+<p>$$ x^2 $$</p>
+<p>inline math $x^2$</p>`)
+  });
 });
+
+  test('replaceMath', () => {
+      const text = `# Heading
+some text
+![[./image/path.png]]
+$$ x^2 $$
+inline math $x^2$`
+      const result = replaceMath(text)
+      expect(result.trim()).toBe(`# Heading
+some text
+![[./image/path.png]]
+[$$] x^2 [/$$]
+inline math [$]x^2[/$]`.trim())
+  });
