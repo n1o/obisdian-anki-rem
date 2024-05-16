@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 
 const MATH = /(\${1,2})(.+)(\${1,2})/g;
 const MAKRDOWN_HEADING = /^#+\s(.*)$/gm;
-const OBSIDIAN_IMAGE = /\!\[\[(.+)\]\]|!\[.+\]((.+))/g;
+const OBSIDIAN_IMAGE = /\!\[\[(.+)\]\]|!\[.+\]\((.+)\)/g;
 const EXTRACT_CARD_INFO = /%% \{"cardId": (.+), "front": (.+), "deck": (.+)\} %%/gm;
 
 class Card {
@@ -27,7 +27,7 @@ class Card {
     }
 
     addFileName(fileName: string) {
-        this.front = `${fileName} -> ${this.front}`
+        this.front = `${fileName.replace(".md","")} -> ${this.front}`
     }
 }
 
@@ -113,7 +113,7 @@ function inlineImages(selection: string, loadImage: (path: string) => string): s
 
     for (const match of matches) {
         const wholePath = match[0];
-        const imagePath = match[1];
+        const imagePath = match[1] || match[2];
 
         const end = imagePath.lastIndexOf(".") + 1
         const imageType = imagePath.slice(end)

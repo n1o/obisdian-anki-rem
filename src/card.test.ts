@@ -61,7 +61,7 @@ inline math $x^2$
 some text
 ![[./image/path.png]]
 another text
-![[./image/path_2.jpg]]
+![text](./image/path_2.jpg)
       `
 
       const result = inlineImages(text, imageToBase64);
