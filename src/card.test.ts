@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { backAsHtml, determineFrontFromHeadings, inlineImages, getAllHeadings, replaceMath } from './card';
+import { backAsHtml, determineFrontFromHeadings, inlineImages, getAllHeadings, replaceMath, extractCardInfo } from './card';
 
 
 describe('Card', () => {
@@ -100,6 +100,18 @@ inline math $x^2$
 <img src="data:image/png;base64, image_1_base_64"/></p>
 <p>$$ x^2 $$</p>
 <p>inline math $x^2$</p>`)
+  });
+
+  test("extractCardInfo", () => {
+    const card = `# Idea #Card 
+%% {"cardId": "1649852863426", "front": "Graph Convolution -> Idea", "deck": "Data Science"} %%
+- rely on [[Neural Message Passing]], by which vertices exchange information with the neighbors and send messages to each other
+- this is similar to Convolution in [[Convolutional Neural Networks]] but on a neighborhood of a graph
+  `
+  const info = extractCardInfo(card);
+
+  expect(info.cardId).toBe(1649852863426);
+
   });
 });
 

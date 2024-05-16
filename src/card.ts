@@ -7,21 +7,41 @@ import { readFileSync } from 'fs';
 
 const MATH = /(\${1,2})(.+)(\${1,2})/g;
 const MAKRDOWN_HEADING = /^#+\s(.*)$/gm;
-const OBSIDIAN_IMAGE = /\!\[\[(.+)\]\]/g;
+const OBSIDIAN_IMAGE = /\!\[\[(.+)\]\]|!\[.+\]((.+))/g;
+const EXTRACT_CARD_INFO = /%% \{"cardId": (.+), "front": (.+), "deck": (.+)\} %%/gm;
 
 class Card {
 
     constructor(
-        public readonly front: string, 
-        public readonly back: string, 
-        public readonly tags: string[], 
-        public readonly deck: string, 
-        public readonly cardId: string| undefined
+        public front: string, 
+        public back: string, 
+        public tags: string[], 
+        public deck: string, 
+        public cardId: string| undefined
         ) {
     }
 
+
     toString(): string {
         return JSON.stringify(this);
+    }
+
+    addFileName(fileName: string) {
+        this.front = `${fileName} -> ${this.front}`
+    }
+}
+
+function extractCardInfo(selection: string): { cardId: number, front: string, deck: string } {
+    const match = selection.match(EXTRACT_CARD_INFO);
+    if (!match) {
+        throw new Error("Could not find card info in selection");
+    } else {
+        const data = JSON.parse(match[0].replace(/%/g,""));
+        return {
+            cardId: Number(data.cardId),
+            front: data.front,
+            deck: data.deck
+        }
     }
 }
 
@@ -158,5 +178,6 @@ export {
     replaceMath,
     createCard,
     getHeading,
-    Card
+    Card,
+    extractCardInfo
 };

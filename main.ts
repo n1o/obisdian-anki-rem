@@ -1,6 +1,6 @@
 import { App, Editor, FileSystemAdapter, FuzzySuggestModal, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 // import fetch
-import { createCard, getHeading } from './src/card'
+import { createCard, extractCardInfo, getHeading } from './src/card'
 import { AnkiService } from 'src/anki';
 import * as path from 'path';
 
@@ -13,6 +13,15 @@ export default class MyPlugin extends Plugin {
 	async onload() {
 
 		// This adds an editor command that can perform some operation on the current editor instance
+		this.addCommand({
+			id: 'open-card',
+			name: 'Open Anki Card',
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				const selection = editor.getSelection();
+				const { cardId } = extractCardInfo(selection)
+				this.ankiService.openCardInEdit(cardId);
+			}
+		});
 		this.addCommand({
 			id: 'update-anki-card',
 			name: 'Update Anki Card',
@@ -27,6 +36,8 @@ export default class MyPlugin extends Plugin {
 				const decks = await this.ankiService.allDecks();
 				const currentFile = this.app.workspace.getActiveFile();
 				if (currentFile) {
+
+					const fileName = currentFile.name;
 					
 					const tags = (this.app.metadataCache.getFileCache(currentFile)?.tags || []).map((tag) => tag.tag);
 
@@ -40,6 +51,7 @@ export default class MyPlugin extends Plugin {
 								this.app.metadataCache.getFirstLinkpathDest(image, currentFile.path)!.path
 							)
 						});
+						card.addFileName(fileName);
 
 						this.ankiService.addCard(card).then(cardId => {
 							const heading = getHeading(selection);
